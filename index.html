@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Campus Connect helps students report and track campus issues.">
+  <title>Campus Connect | Better campus, together</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="style.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="#home" aria-label="Campus Connect home">
+        <span class="brand-mark" aria-hidden="true">CC</span>
+        <span>Campus<span class="brand-accent">Connect</span></span>
+      </a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false" aria-controls="mainNav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="main-nav" id="mainNav" aria-label="Main navigation">
+        <a href="#home">Home</a>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#report">Report an issue</a>
+        <a href="#reports">All reports</a>
+      </nav>
+      <a class="nav-cta" href="#report">Report an issue <span aria-hidden="true">↗</span></a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-dot"></span> YOUR CAMPUS. YOUR VOICE.</p>
+          <h1>Small reports.<br><span>Big improvements.</span></h1>
+          <p class="hero-description">Help make campus life better. Report maintenance issues, keep track of progress, and work together toward a safer, smoother campus.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#report">Report a problem <span aria-hidden="true">→</span></a>
+            <a class="button button-secondary" href="#reports">Explore reports</a>
+          </div>
+          <div class="hero-note"><span class="note-check" aria-hidden="true">✓</span> Simple to report. Easy to track.</div>
+        </div>
+        <div class="hero-visual" aria-label="Campus issue dashboard illustration">
+          <div class="visual-orbit orbit-one"></div>
+          <div class="visual-orbit orbit-two"></div>
+          <div class="visual-card visual-card-main">
+            <div class="visual-card-top"><span class="mini-icon">⌂</span><span class="visual-label">CAMPUS OVERVIEW</span><span class="live-dot">● LIVE DEMO</span></div>
+            <div class="visual-title">A better campus<br>starts here.</div>
+            <div class="visual-bars"><span></span><span></span><span></span></div>
+            <div class="visual-card-bottom"><span class="avatar-stack"><i>A</i><i>S</i><i>R</i></span><span>Everyone can help</span><span class="arrow-circle">↗</span></div>
+          </div>
+          <div class="floating-chip chip-top"><span class="chip-icon chip-blue">✓</span><span><b>Issues tracked</b><small>One step at a time</small></span></div>
+          <div class="floating-chip chip-bottom"><span class="chip-icon chip-green">⌁</span><span><b>Better together</b><small>Student-powered change</small></span></div>
+          <div class="visual-spark spark-one">✦</div><div class="visual-spark spark-two">✳</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-section" id="dashboard">
+      <div class="container">
+        <div class="section-heading compact-heading">
+          <div><p class="eyebrow">AT A GLANCE</p><h2>Campus status</h2></div>
+          <p class="section-side-note">A live summary of reports saved in this browser.</p>
+        </div>
+        <div class="stats-grid" aria-live="polite">
+          <article class="stat-card"><div class="stat-icon icon-total">▤</div><p class="stat-label">Total reports</p><p class="stat-number" id="totalCount">0</p><p class="stat-foot">All submitted issues</p></article>
+          <article class="stat-card"><div class="stat-icon icon-open">◷</div><p class="stat-label">Open reports</p><p class="stat-number" id="openCount">0</p><p class="stat-foot">Need attention</p></article>
+          <article class="stat-card"><div class="stat-icon icon-resolved">✓</div><p class="stat-label">Resolved reports</p><p class="stat-number" id="resolvedCount">0</p><p class="stat-foot">Marked as resolved</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace-section">
+      <div class="container workspace-grid">
+        <section class="panel report-panel" id="report">
+          <div class="panel-heading">
+            <div><p class="eyebrow">MAKE A DIFFERENCE</p><h2>Report an issue</h2><p class="panel-subtitle">Tell us what needs attention on campus.</p></div>
+            <div class="heading-icon" aria-hidden="true">＋</div>
+          </div>
+          <div class="notice" id="formMessage" role="status" aria-live="polite" hidden></div>
+          <form id="reportForm" novalidate>
+            <div class="field">
+              <label for="issueTitle">Issue title <span class="required">*</span></label>
+              <input id="issueTitle" name="issueTitle" type="text" maxlength="80" placeholder="e.g. Fan not working in room 204" required>
+              <small class="field-hint">Use a short, clear title (5–80 characters).</small>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label for="category">Category <span class="required">*</span></label>
+                <select id="category" name="category" required>
+                  <option value="">Choose category</option>
+                  <option>Electrical</option>
+                  <option>Water</option>
+                  <option>Cleanliness</option>
+                  <option>Maintenance</option>
+                  <option>Internet</option>
+                  <option>Safety</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="location">Location <span class="required">*</span></label>
+                <input id="location" name="location" type="text" maxlength="100" placeholder="e.g. Block B, Room 204" required>
+              </div>
+            </div>
+            <div class="field">
+              <label for="description">Description <span class="required">*</span></label>
+              <textarea id="description" name="description" rows="4" maxlength="500" placeholder="Describe what happened and any details that may help..." required></textarea>
+              <div class="textarea-footer"><small class="field-hint">Please don't include private or sensitive information.</small><small id="charCount">0/500</small></div>
+            </div>
+            <button class="button button-primary submit-button" type="submit">Submit report <span aria-hidden="true">→</span></button>
+            <p class="privacy-note"><span aria-hidden="true">ⓘ</span> Demo only: reports are saved in this browser, not sent to college staff.</p>
+          </form>
+        </section>
+
+        <section class="panel reports-panel" id="reports">
+          <div class="panel-heading reports-heading">
+            <div><p class="eyebrow">CAMPUS COMMUNITY</p><h2>Recent reports</h2><p class="panel-subtitle">Browse reports and update their status.</p></div>
+            <span class="report-count-pill" id="reportCountPill">0 reports</span>
+          </div>
+          <div class="filter-bar">
+            <label class="sr-only" for="categoryFilter">Filter reports by category</label>
+            <select id="categoryFilter">
+              <option value="All">All categories</option>
+              <option>Electrical</option><option>Water</option><option>Cleanliness</option>
+              <option>Maintenance</option><option>Internet</option><option>Safety</option><option>Other</option>
+            </select>
+            <label class="sr-only" for="statusFilter">Filter reports by status</label>
+            <select id="statusFilter">
+              <option value="All">All statuses</option>
+              <option value="Open">Open</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+          <div id="reportsList" class="reports-list" aria-live="polite"></div>
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon" aria-hidden="true">▤</div>
+            <h3>No reports to show</h3>
+            <p>Submit the first report or change your filters to see issues here.</p>
+            <a href="#report" class="text-link">Create a report <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="list-footer"><span id="listSummary">Showing 0 reports</span><button class="text-button" id="clearFilters" type="button">Reset filters</button></div>
+        </section>
+      </div>
+    </section>
+
+    <section class="closing-cta">
+      <div class="container closing-inner"><div><p class="eyebrow">BETTER CAMPUS, TOGETHER</p><h2>See something that needs fixing?</h2><p>Share it with the community. Every useful report is a step forward.</p></div><a class="button button-light" href="#report">Report an issue <span aria-hidden="true">→</span></a></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner"><a class="brand footer-brand" href="#home"><span class="brand-mark" aria-hidden="true">CC</span><span>Campus<span class="brand-accent">Connect</span></span></a><p>Made for a better campus experience.</p><p class="footer-demo">Student project demo · No reports are sent to college staff.</p></div>
+  </footer>
+</body>
+</html>

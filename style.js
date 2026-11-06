@@ -1,515 +1,214 @@
 
+/* Campus Connect student demo account system.
+   This is NOT secure authentication. */
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "campusConnectReports_v1";
+  const $ = (id) => document.getElementById(id);
 
-  const CATEGORIES = [
-    "Electrical",
-    "Water",
-    "Cleanliness",
-    "Maintenance",
-    "Internet",
-    "Safety",
-    "Other"
-  ];
+  const modal = $("authModal");
+  const authButton = $("authButton");
+  const signInForm = $("signInForm");
+  const signUpForm = $("signUpForm");
+  const message = $("authMessage");
+  const welcome = $("studentWelcome");
 
-  // Get the HTML elements we need
-  const form = document.getElementById("reportForm");
-  const titleInput = document.getElementById("issueTitle");
-  const categoryInput = document.getElementById("category");
-  const locationInput = document.getElementById("location");
-  const descriptionInput = document.getElementById("description");
+  const USERS_KEY = "campusConnectDemoUsers";
+  const SESSION_KEY = "campusConnectDemoSession";
 
-  const formMessage = document.getElementById("formMessage");
-  const reportsList = document.getElementById("reportsList");
-  const emptyState = document.getElementById("emptyState");
-
-  const categoryFilter = document.getElementById("categoryFilter");
-  const statusFilter = document.getElementById("statusFilter");
-  const clearFiltersButton = document.getElementById("clearFilters");
-
-  const charCount = document.getElementById("charCount");
-  const menuToggle = document.getElementById("menuToggle");
-  const mainNav = document.getElementById("mainNav");
-
-  // Load saved reports from the browser
-  let reports = loadReports();
-
-  function loadReports() {
+  // Read demo accounts saved in this browser.
+  function getUsers() {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-
-      if (!saved) {
-        return [];
-      }
-
-      const parsed = JSON.parse(saved);
-
-      if (!Array.isArray(parsed)) {
-        return [];
-      }
-
-      return parsed.filter((report) =>
-        report &&
-        typeof report.id === "string" &&
-        typeof report.title === "string" &&
-        typeof report.category === "string" &&
-        CATEGORIES.includes(report.category) &&
-        typeof report.location === "string" &&
-        typeof report.description === "string" &&
-        ["Open", "Resolved"].includes(report.status) &&
-        typeof report.createdAt === "string"
-      );
-    } catch (error) {
-      console.error("Error loading reports:", error);
+      return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+    } catch {
       return [];
     }
   }
 
-  // Save reports in this browser
-  function saveReports() {
+  function saveUsers(users) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  }
+
+  function getSession() {
     try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(reports)
-      );
-
-      return true;
-    } catch (error) {
-      console.error("Error saving reports:", error);
-
-      showMessage(
-        "Could not save your report. Check your browser storage.",
-        "error"
-      );
-
-      return false;
+      return JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+    } catch {
+      return null;
     }
   }
 
-  // Show success or error messages
-  function showMessage(message, type) {
-    formMessage.textContent = message;
-
-    formMessage.className =
-      "notice " +
-      (type === "success"
-        ? "notice-success"
-        : "notice-error");
-
-    formMessage.hidden = false;
+  function showMessage(text, isError = false) {
+    message.textContent = text;
+    message.hidden = false;
+    message.style.background = isError ? "#fef2f2" : "#ecfdf3";
+    message.style.color = isError ? "#b91c1c" : "#166534";
   }
 
-  function hideMessage() {
-    formMessage.hidden = true;
-    formMessage.textContent = "";
-    formMessage.className = "notice";
+  function clearMessage() {
+    message.textContent = "";
+    message.hidden = true;
   }
 
-  // Create HTML elements safely
-  function makeElement(tag, className, text) {
-    const element = document.createElement(tag);
-
-    if (className) {
-      element.className = className;
-    }
-
-    if (text !== undefined) {
-      element.textContent = text;
-    }
-
-    return element;
+  function openModal(mode = "signin") {
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    setMode(mode);
   }
 
-  // Format the date of a report
-  function formatDate(dateString) {
-    const date = new Date(dateString);
-
-    if (Number.isNaN(date.getTime())) {
-      return "Date unavailable";
-    }
-
-    return new Intl.DateTimeFormat(undefined, {
-      day: "numeric",
-      month: "short",
-      year: "numeric"
-    }).format(date);
+  function closeModal() {
+    modal.hidden = true;
+    document.body.style.overflow = "";
+    clearMessage();
   }
 
-  // Display reports and update the dashboard
-  function renderReports() {
-    const selectedCategory = categoryFilter.value;
-    const selectedStatus = statusFilter.value;
+  function setMode(mode) {
+    const signup = mode === "signup";
 
-    const filteredReports = reports.filter((report) => {
-      const categoryMatches =
-        selectedCategory === "All" ||
-        report.category === selectedCategory;
+    signInForm.hidden = signup;
+    signUpForm.hidden = !signup;
 
-      const statusMatches =
-        selectedStatus === "All" ||
-        report.status === selectedStatus;
+    $("showSignIn").classList.toggle("active", !signup);
+    $("showSignUp").classList.toggle("active", signup);
 
-      return categoryMatches && statusMatches;
-    });
+    $("authHeading").textContent = signup
+      ? "Create your student account"
+      : "Welcome back";
 
-    reportsList.replaceChildren();
+    $("authSubtitle").textContent = signup
+      ? "Enter your details to join Campus Connect."
+      : "Sign in to your campus community.";
 
-    emptyState.style.display =
-      filteredReports.length > 0 ? "none" : "block";
-
-    filteredReports.forEach((report) => {
-      const card = makeElement("article", "report-card");
-
-      // Category and status
-      const top = makeElement("div", "report-card-top");
-
-      const category = makeElement(
-        "span",
-        "category-pill",
-        report.category
-      );
-
-      const statusClass =
-        report.status === "Resolved"
-          ? "status-resolved"
-          : "status-open";
-
-      const status = makeElement(
-        "span",
-        "status-pill " + statusClass,
-        report.status
-      );
-
-      top.append(category, status);
-
-      // Report title and description
-      const title = makeElement("h3", "", report.title);
-
-      const description = makeElement(
-        "p",
-        "report-description",
-        report.description
-      );
-
-      // Location and date
-      const meta = makeElement("div", "report-meta");
-
-      const location = makeElement(
-        "span",
-        "",
-        "⌖ " + report.location
-      );
-
-      const date = makeElement(
-        "span",
-        "",
-        "◷ " + formatDate(report.createdAt)
-      );
-
-      meta.append(location, date);
-
-      // Buttons
-      const actions = makeElement(
-        "div",
-        "report-card-actions"
-      );
-
-      if (report.status === "Open") {
-        const resolveButton = makeElement(
-          "button",
-          "small-button resolve-button",
-          "✓ Mark resolved"
-        );
-
-        resolveButton.type = "button";
-
-        resolveButton.addEventListener("click", () => {
-          updateStatus(report.id);
-        });
-
-        actions.append(resolveButton);
-      } else {
-        const reopenButton = makeElement(
-          "button",
-          "small-button",
-          "↻ Reopen"
-        );
-
-        reopenButton.type = "button";
-
-        reopenButton.addEventListener("click", () => {
-          updateStatus(report.id);
-        });
-
-        actions.append(reopenButton);
-      }
-
-      const deleteButton = makeElement(
-        "button",
-        "small-button delete-button",
-        "Delete"
-      );
-
-      deleteButton.type = "button";
-
-      deleteButton.addEventListener("click", () => {
-        deleteReport(report.id);
-      });
-
-      actions.append(deleteButton);
-
-      card.append(
-        top,
-        title,
-        description,
-        meta,
-        actions
-      );
-
-      reportsList.append(card);
-    });
-
-    // Update dashboard counts
-    document.getElementById("totalCount").textContent =
-      reports.length;
-
-    document.getElementById("openCount").textContent =
-      reports.filter((report) => report.status === "Open").length;
-
-    document.getElementById("resolvedCount").textContent =
-      reports.filter((report) => report.status === "Resolved").length;
-
-    document.getElementById("reportCountPill").textContent =
-      reports.length +
-      (reports.length === 1 ? " report" : " reports");
-
-    document.getElementById("listSummary").textContent =
-      "Showing " +
-      filteredReports.length +
-      " of " +
-      reports.length +
-      (reports.length === 1 ? " report" : " reports");
+    clearMessage();
   }
 
-  // Change a report's status
-  function updateStatus(id) {
-    const report = reports.find((item) => item.id === id);
+  function renderStudent() {
+    const session = getSession();
 
-    if (!report) {
-      return;
-    }
+    if (session) {
+      welcome.hidden = false;
+      $("welcomeName").textContent = "Welcome, " + session.name + "!";
 
-    report.status =
-      report.status === "Open" ? "Resolved" : "Open";
+      $("welcomeDetails").textContent =
+        "Roll Number: " + session.roll +
+        " | Branch: " + session.branch +
+        " | Class/Section: " + session.className +
+        " | Room: " + session.room;
 
-    if (saveReports()) {
-      renderReports();
-    }
-  }
-
-  // Delete a report
-  function deleteReport(id) {
-    const report = reports.find((item) => item.id === id);
-
-    if (!report) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      'Delete the report "' + report.title + '"?'
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    const previousReports = reports;
-
-    reports = reports.filter((item) => item.id !== id);
-
-    if (saveReports()) {
-      renderReports();
+      authButton.textContent = "Sign Out";
     } else {
-      reports = previousReports;
+      welcome.hidden = true;
+      $("welcomeName").textContent = "";
+      $("welcomeDetails").textContent = "";
+      authButton.textContent = "Sign In";
     }
   }
 
-  // Validate the form before submitting
-  function validateForm() {
-    const title = titleInput.value.trim();
-    const category = categoryInput.value;
-    const location = locationInput.value.trim();
-    const description = descriptionInput.value.trim();
-
-    if (title.length < 5 || title.length > 80) {
-      showMessage(
-        "Title must contain between 5 and 80 characters.",
-        "error"
-      );
-
-      titleInput.focus();
-      return null;
+  authButton.addEventListener("click", () => {
+    if (getSession()) {
+      sessionStorage.removeItem(SESSION_KEY);
+      renderStudent();
+    } else {
+      openModal("signin");
     }
+  });
 
-    if (!CATEGORIES.includes(category)) {
-      showMessage(
-        "Please choose a valid category.",
-        "error"
-      );
+  $("closeAuth").addEventListener("click", closeModal);
+  $("authBackdrop").addEventListener("click", closeModal);
 
-      categoryInput.focus();
-      return null;
+  $("showSignIn").addEventListener("click", () => setMode("signin"));
+  $("showSignUp").addEventListener("click", () => setMode("signup"));
+  $("switchToSignIn").addEventListener("click", () => setMode("signin"));
+  $("switchToSignUp").addEventListener("click", () => setMode("signup"));
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !modal.hidden) {
+      closeModal();
     }
+  });
 
-    if (location.length < 2 || location.length > 100) {
-      showMessage(
-        "Location must contain between 2 and 100 characters.",
-        "error"
-      );
-
-      locationInput.focus();
-      return null;
-    }
-
-    if (
-      description.length < 10 ||
-      description.length > 500
-    ) {
-      showMessage(
-        "Description must contain between 10 and 500 characters.",
-        "error"
-      );
-
-      descriptionInput.focus();
-      return null;
-    }
-
-    return {
-      title,
-      category,
-      location,
-      description
-    };
-  }
-
-  // Handle form submission
-  form.addEventListener("submit", (event) => {
+  // Register a student in this browser.
+  signUpForm.addEventListener("submit", (event) => {
     event.preventDefault();
+    clearMessage();
 
-    hideMessage();
-
-    const values = validateForm();
-
-    if (!values) {
-      return;
-    }
-
-    const report = {
-      id:
-        window.crypto &&
-        typeof window.crypto.randomUUID === "function"
-          ? window.crypto.randomUUID()
-          : Date.now() +
-            "-" +
-            Math.random().toString(16).slice(2),
-
-      ...values,
-
-      status: "Open",
-      createdAt: new Date().toISOString()
+    const student = {
+      name: $("studentName").value.trim(),
+      email: $("studentEmail").value.trim().toLowerCase(),
+      roll: $("studentRoll").value.trim(),
+      branch: $("studentBranch").value,
+      className: $("studentClass").value.trim(),
+      room: $("studentRoom").value.trim()
     };
 
-    reports.unshift(report);
+    const password = $("registerPassword").value;
+    const confirm = $("confirmPassword").value;
 
-    if (!saveReports()) {
-      reports = reports.filter(
-        (item) => item.id !== report.id
-      );
-
+    if (password !== confirm) {
+      showMessage("The passwords do not match.", true);
       return;
     }
 
-    form.reset();
+    const users = getUsers();
 
-    charCount.textContent = "0/500";
+    if (users.some((user) => user.email === student.email)) {
+      showMessage(
+        "This email already has a demo account. Please sign in.",
+        true
+      );
+      return;
+    }
 
-    renderReports();
+    // Password is deliberately not saved.
+    // This demo cannot provide secure authentication.
+    users.push(student);
+    saveUsers(users);
 
-    showMessage(
-      "Report submitted successfully! It is saved in this browser only.",
-      "success"
-    );
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(student));
+    signUpForm.reset();
+    renderStudent();
 
-    document.getElementById("reports").scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+    showMessage("Demo registration successful! Welcome, " + student.name + ".");
+    window.setTimeout(closeModal, 1200);
   });
 
-  // Category and status filters
-  categoryFilter.addEventListener("change", renderReports);
-  statusFilter.addEventListener("change", renderReports);
+  // Sign in using the email and demo password entered at registration.
+  // Since passwords are not stored, this demo only matches registered email.
+  signInForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    clearMessage();
 
-  // Reset filters
-  clearFiltersButton.addEventListener("click", () => {
-    categoryFilter.value = "All";
-    statusFilter.value = "All";
+    const email = $("loginEmail").value.trim().toLowerCase();
+    const password = $("loginPassword").value;
 
-    renderReports();
+    if (password.length < 4) {
+      showMessage("Enter a demo password of at least 4 characters.", true);
+      return;
+    }
+
+    const student = getUsers().find((user) => user.email === email);
+
+    if (!student) {
+      showMessage(
+        "No demo account found for this email in this browser. Please sign up first.",
+        true
+      );
+      return;
+    }
+
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(student));
+    signInForm.reset();
+    renderStudent();
+
+    showMessage("Welcome back, " + student.name + "!");
+    window.setTimeout(closeModal, 1000);
   });
 
-  // Live description character counter
-  descriptionInput.addEventListener("input", () => {
-    charCount.textContent =
-      descriptionInput.value.length + "/500";
+  $("logoutButton").addEventListener("click", () => {
+    sessionStorage.removeItem(SESSION_KEY);
+    renderStudent();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
-  // Hide old validation messages when the user edits a field
-  [
-    titleInput,
-    categoryInput,
-    locationInput,
-    descriptionInput
-  ].forEach((field) => {
-    field.addEventListener("input", () => {
-      if (!formMessage.hidden) {
-        hideMessage();
-      }
-    });
-
-    field.addEventListener("change", () => {
-      if (!formMessage.hidden) {
-        hideMessage();
-      }
-    });
-  });
-
-  // Mobile navigation menu
-  menuToggle.addEventListener("click", () => {
-    const isOpen = mainNav.classList.toggle("is-open");
-
-    menuToggle.setAttribute(
-      "aria-expanded",
-      String(isOpen)
-    );
-
-    menuToggle.setAttribute(
-      "aria-label",
-      isOpen ? "Close navigation" : "Open navigation"
-    );
-  });
-
-  mainNav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => {
-      mainNav.classList.remove("is-open");
-
-      menuToggle.setAttribute("aria-expanded", "false");
-      menuToggle.setAttribute("aria-label", "Open navigation");
-    });
-  });
-
-  // Initial display when the page opens
-  renderReports();
+  // Restore the welcome message when the page is refreshed in this tab.
+  renderStudent();
 })();
